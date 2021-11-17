@@ -129,7 +129,7 @@ runs:
       if: inputs.domainPrefix != '' && steps.check-godaddy-secrets.outputs.hasGoDaddyApiKey
       run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
-        -godaddy_name "${{ inputs.domainPrefix }}-staging" `
+        -godaddy_name "${{ inputs.domainPrefix }}-${{inputs.environment}}-staging" `
         -godaddy_destination "${{env.webAppName}}-staging.azurewebsites.net" `
         -godaddy_type "CNAME" `
         -godaddy_key ${{ secrets.godaddyKey }} `
@@ -139,7 +139,7 @@ runs:
       if: inputs.domainPrefix != '' && steps.check-godaddy-secrets.outputs.hasGoDaddyApiKey
       run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
-        -godaddy_name "${{ inputs.domainPrefix }}" `
+        -godaddy_name "${{ inputs.domainPrefix }}-${{inputs.environment}}" `
         -godaddy_destination "${{env.webAppName}}.azurewebsites.net" `
         -godaddy_type "CNAME" `
         -godaddy_key ${{ secrets.godaddyKey }} `
