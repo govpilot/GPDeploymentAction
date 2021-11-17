@@ -1,4 +1,4 @@
-name: 'Deploy To Azure'
+name: 'DeployToAzure'
 description: 'Deploy a web app to azure using key vault, godaddy sub-domain, end2end tests'
 inputs:
   appName:
