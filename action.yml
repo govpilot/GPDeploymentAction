@@ -56,6 +56,9 @@ env:
 runs:
   using: "composite"
   steps:
+    - id: check-godaddy-secrets
+      run: echo "::set-output name=hasGoDaddyApiKey::${{ secrets.godaddyKey }}"
+
     - name: Checkout source code
       uses: actions/checkout@v2    
     - name: Download artifact
@@ -123,7 +126,7 @@ runs:
         az keyvault set-policy --name ${{ env.keyVaultName }} --object-id $websiteSlotIdentityPrincipalId --secret-permissions list get
       shell: pwsh
     - name: Create Subdomain for staging slot
-      if: inputs.domainPrefix != '' && secrets.godaddyKey != ''
+      if: inputs.domainPrefix != '' && steps.check-godaddy-secrets.outputs.hasGoDaddyApiKey
       run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
         -godaddy_name "${{ inputs.domainPrefix }}-staging" `
@@ -133,7 +136,7 @@ runs:
         -godaddy_secret ${{ secrets.godaddySecret }}
       shell: pwsh
     - name: Create Subdomain for production slot
-      if: inputs.domainPrefix != '' && secrets.godaddyKey != ''
+      if: inputs.domainPrefix != '' && steps.check-godaddy-secrets.outputs.hasGoDaddyApiKey
       run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
         -godaddy_name "${{ inputs.domainPrefix }}" `
