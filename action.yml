@@ -28,7 +28,6 @@ inputs:
     required: false
     type: string
     default: 'website'
-secrets:
   azureCreds:
     required: true
   godaddyKey:
@@ -57,7 +56,8 @@ runs:
   using: "composite"
   steps:
     - id: check-godaddy-secrets
-      run: echo "::set-output name=hasGoDaddyApiKey::${{ secrets.godaddyKey }}"
+      run: echo "::set-output name=hasGoDaddyApiKey::${{ inputs.godaddyKey }}"
+      shell: bash
 
     - name: Checkout source code
       uses: actions/checkout@v2    
@@ -83,7 +83,7 @@ runs:
     - name: Azure Login
       uses: azure/login@v1
       with:
-        creds: ${{ secrets.azureCreds }}
+        creds: ${{ inputs.azureCreds }}
     - name: Deploy infrastructure 
       run: |
           az group create --location ${{ inputs.resourceGroupLocation }} --name ${{ env.hubResourceGroupName }}
@@ -126,24 +126,24 @@ runs:
         az keyvault set-policy --name ${{ env.keyVaultName }} --object-id $websiteSlotIdentityPrincipalId --secret-permissions list get
       shell: pwsh
     - name: Create Subdomain for staging slot
-      if: inputs.domainPrefix != '' && steps.check-godaddy-secrets.outputs.hasGoDaddyApiKey
+      if: inputs.domainPrefix != '' && steps.check-godaddy-inputs.outputs.hasGoDaddyApiKey
       run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
         -godaddy_name "${{ inputs.domainPrefix }}-${{inputs.environment}}-staging" `
         -godaddy_destination "${{env.webAppName}}-staging.azurewebsites.net" `
         -godaddy_type "CNAME" `
-        -godaddy_key ${{ secrets.godaddyKey }} `
-        -godaddy_secret ${{ secrets.godaddySecret }}
+        -godaddy_key ${{ inputs.godaddyKey }} `
+        -godaddy_secret ${{ inputs.godaddySecret }}
       shell: pwsh
     - name: Create Subdomain for production slot
-      if: inputs.domainPrefix != '' && steps.check-godaddy-secrets.outputs.hasGoDaddyApiKey
+      if: inputs.domainPrefix != '' && steps.check-godaddy-inputs.outputs.hasGoDaddyApiKey
       run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
         -godaddy_name "${{ inputs.domainPrefix }}-${{inputs.environment}}" `
         -godaddy_destination "${{env.webAppName}}.azurewebsites.net" `
         -godaddy_type "CNAME" `
-        -godaddy_key ${{ secrets.godaddyKey }} `
-        -godaddy_secret ${{ secrets.godaddySecret }}
+        -godaddy_key ${{ inputs.godaddyKey }} `
+        -godaddy_secret ${{ inputs.godaddySecret }}
       shell: pwsh      
     - name: Download integration tests repo
       if: inputs.testName != ''
@@ -151,7 +151,7 @@ runs:
       with:
         repository: govpilot/integration_tests
         path: integration_tests
-        token: ${{ secrets.integrationTestToken }}
+        token: ${{ inputs.integrationTestToken }}
     - name: Set up Python 3.8
       if: inputs.testName != ''
       uses: actions/setup-python@v1
@@ -166,8 +166,8 @@ runs:
     - name: Test with pytest
       if: inputs.testName != ''
       env:
-        QA_TEST_ACCOUNT_USER: ${{ secrets.qaTestAccountUser }}
-        QA_TEST_ACCOUNT_PASSWORD: ${{ secrets.qaTestAccountPassword }}
+        QA_TEST_ACCOUNT_USER: ${{ inputs.qaTestAccountUser }}
+        QA_TEST_ACCOUNT_PASSWORD: ${{ inputs.qaTestAccountPassword }}
         environment: '${{inputs.environment}}'
       run: pytest integration_tests/unit_tests/integration_tests.py -m ${{ inputs.testName }}
 
@@ -178,4 +178,4 @@ runs:
       if: inputs.domainPrefix != ''
       run: |
         az webapp config hostname add --webapp-name "${{env.webAppName}}" --resource-group ${{env.resourceGroupName}} --hostname "${{inputs.domainPrefix}}-${{inputs.environment}}.govpilot.com"
-        az webapp config ssl bind --certificate-thumbprint ${{secrets.certificateThumbprint}} --ssl-type SNI --name "${{env.webAppName}}" --resource-group ${{env.resourceGroupName}}
+        az webapp config ssl bind --certificate-thumbprint ${{inputs.certificateThumbprint}} --ssl-type SNI --name "${{env.webAppName}}" --resource-group ${{env.resourceGroupName}}
