@@ -1,0 +1,70 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "webSiteName": {
+      "type": "string"
+    },
+    "hostingPlanName": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('webSiteName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+      ],
+      "kind": "app",
+      "tags": {
+        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "empty",
+        "displayName": "Web Service Webapp"
+      },
+      "properties": {
+        "name": "[parameters('webSiteName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "alwaysOn": true,
+          "connectionStrings": [
+            {
+              "name": "AzureWebJobsDashboard",
+              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value,';EndpointSuffix=core.windows.net')]",
+              "type": "Custom"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value,';EndpointSuffix=core.windows.net')]",
+              "type": "Custom"
+            },
+            {
+              "name": "StorageConnectionString",
+              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value,';EndpointSuffix=core.windows.net')]",
+              "type": "Custom"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2018-11-01",
+          "type": "slots",
+          "name": "Staging",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[parameters('webSiteName')]"
+          ],
+          "kind": "app",
+          "properties": {}
+        }
+      ]
+    }
+  ]
+}

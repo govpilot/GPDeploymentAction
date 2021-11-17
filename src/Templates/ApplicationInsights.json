@@ -1,0 +1,37 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "applicationInsightsName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "name": "[parameters('applicationInsightsName')]",
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2015-05-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "Application Insights"
+      },
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "Flow_Type": "Bluefield",
+        "Request_Source": "rest",
+        "RetentionInDays": 90,
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      }
+    }
+  ],
+  "outputs": {
+    "applicationInsightsInstrumentationKeyOutput": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Insights/components', parameters('applicationInsightsName')), '2014-04-01').InstrumentationKey]"
+    }
+  }
+}
