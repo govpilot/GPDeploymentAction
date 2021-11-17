@@ -68,7 +68,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v1.0.0
         with:
-          name: ${{ input.artifactName }}
+          name: ${{ inputs.artifactName }}
       #- name: Download Test project artifact
       #  uses: actions/download-artifact@v1.0.0
       #  with:
@@ -77,7 +77,7 @@ jobs:
       #- run: dir .
       - name: Replace Key Vaults url/name
         run: |
-          sed -i 's/kv-gphub-dev-eastus/${{ env.keyVaultName }}/g' ${{ input.artifactName }}/*.config
+          sed -i 's/kv-gphub-dev-eastus/${{ env.keyVaultName }}/g' ${{ inputs.artifactName }}/*.config
           # sed -i 's/kv-gphub-dev-eastus/${{ env.keyVaultName }}/g' testProject/bin/*/*.config
         shell: bash  
       #- name: Run Unit Tests
@@ -118,7 +118,7 @@ jobs:
         uses: Azure/webapps-deploy@v1
         with:
           app-name: "${{env.webAppName}}"
-          package: ${{ input.artifactName }}
+          package: ${{ inputs.artifactName }}
           slot-name: staging   
       - name: Set website configuration
         run: az webapp config appsettings set --name "${{env.webAppName}}" --resource-group "${{ env.resourceGroupName }}" --settings "Environment=${{ inputs.environment }}" --slot staging
