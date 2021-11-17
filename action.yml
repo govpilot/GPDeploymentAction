@@ -1,5 +1,6 @@
-name: 'DeployToAzure'
+name: 'GPDeploymentAction'
 description: 'Deploy a web app to azure using key vault, godaddy sub-domain, end2end tests'
+author: '@besmiralia'
 inputs:
   appName:
     required: true
@@ -55,30 +56,18 @@ env:
 runs:
   using: "composite"
   steps:
-    - id: check-godaddy-secrets
-      run: echo "::set-output name=hasGoDaddyApiKey::${{ inputs.godaddyKey }}"
-      shell: bash
-
     - name: Checkout source code
       uses: actions/checkout@v2    
     - name: Download artifact
       uses: actions/download-artifact@v1.0.0
       with:
         name: ${{ input.artifactName }}
-    #- name: Download Test project artifact
-    #  uses: actions/download-artifact@v1.0.0
-    #  with:
-    #    name: testProject
-            
-    #- run: dir .
+
     - name: Replace Key Vaults url/name
       run: |
         sed -i 's/kv-gphub-dev-eastus/${{ env.keyVaultName }}/g' ${{ input.artifactName }}/*.config
         # sed -i 's/kv-gphub-dev-eastus/${{ env.keyVaultName }}/g' testProject/bin/*/*.config
-      shell: bash  
-    #- name: Run Unit Tests
-    #  if: 0 == 1
-    #  run: dotnet vstest testProject\bin\Release\**Tests.dll
+      shell: bash
 
     - name: Azure Login
       uses: azure/login@v1
@@ -126,7 +115,7 @@ runs:
         az keyvault set-policy --name ${{ env.keyVaultName }} --object-id $websiteSlotIdentityPrincipalId --secret-permissions list get
       shell: pwsh
     - name: Create Subdomain for staging slot
-      if: inputs.domainPrefix != '' && steps.check-godaddy-inputs.outputs.hasGoDaddyApiKey
+      if: inputs.domainPrefix != '' && inputs.godaddyKey != '' && inputs.godaddySecret != ''
       run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
         -godaddy_name "${{ inputs.domainPrefix }}-${{inputs.environment}}-staging" `
@@ -136,7 +125,7 @@ runs:
         -godaddy_secret ${{ inputs.godaddySecret }}
       shell: pwsh
     - name: Create Subdomain for production slot
-      if: inputs.domainPrefix != '' && steps.check-godaddy-inputs.outputs.hasGoDaddyApiKey
+      if: inputs.domainPrefix != '' && inputs.godaddyKey != '' && inputs.godaddySecret != ''
       run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
         -godaddy_name "${{ inputs.domainPrefix }}-${{inputs.environment}}" `
