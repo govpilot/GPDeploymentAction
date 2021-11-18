@@ -44,28 +44,44 @@ inputs:
   qa_test_account_password:
     required: false
 
-env:
-  webapp_name: "app-gp${{ inputs.resourcegroup_code }}-${{ inputs.app_name }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}"
-  resourcegroup_name: "rg-${{ inputs.resourcegroup_code }}-${{ inputs.environment }}"
-  hub_resourcegroup_name: "rg-${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}"
-  hosting_name: "plan-gp${{inputs.resourcegroup_code}}-${{inputs.environment}}-${{inputs.resourcegroup_location}}"
-  storage_name: "stgp${{ inputs.resourcegroup_code }}${{ inputs.environment }}${{inputs.resourcegroup_location}}"
-  appinsights_name: "appi-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{inputs.resourcegroup_location}}"
-  keyvault_name: kv-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}
+# env:
+#   webapp_name: "app-gp${{ inputs.resourcegroup_code }}-${{ inputs.app_name }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}"
+#   resourcegroup_name: "rg-${{ inputs.resourcegroup_code }}-${{ inputs.environment }}"
+#   hub_resourcegroup_name: "rg-${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}"
+#   hosting_name: "plan-gp${{inputs.resourcegroup_code}}-${{inputs.environment}}-${{inputs.resourcegroup_location}}"
+#   storage_name: "stgp${{ inputs.resourcegroup_code }}${{ inputs.environment }}${{inputs.resourcegroup_location}}"
+#   appinsights_name: "appi-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{inputs.resourcegroup_location}}"
+#   keyvault_name: "kv-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}"
 
 runs:
   using: "composite"
   steps:
+    - name: Set variables
+      using: "core/set-env"
+      env:
+        - name: "webapp_name"
+          value: "app-gp${{ inputs.resourcegroup_code }}-${{ inputs.app_name }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}"
+        - name: "resourcegroup_name"
+          value: "rg-${{ inputs.resourcegroup_code }}-${{ inputs.environment }}"
+        - name: "hub_resourcegroup_name"
+          value: "rg-${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}"
+        - name: "hosting_name"
+          value: "plan-gp${{inputs.resourcegroup_code}}-${{inputs.environment}}-${{inputs.resourcegroup_location}}"
+        - name: "storage_name"
+          value: "stgp${{ inputs.resourcegroup_code }}${{ inputs.environment }}${{inputs.resourcegroup_location}}"
+        - name: "appinsights_name"
+          value: "appi-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{inputs.resourcegroup_location}}"
+        - name: "kv-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}""
     - name: Checkout source code
       uses: actions/checkout@v2    
     - name: Download artifact
       uses: actions/download-artifact@v1.0.0
       with:
-        name: ${{ input.artifact_name }}
+        name: ${{ inputs.artifact_name }}
 
     - name: Replace Key Vaults url/name
       run: |
-        sed -i 's/kv-gphub-dev-eastus/${{ env.keyvault_name }}/g' ${{ input.artifact_name }}/*.config
+        sed -i 's/kv-gphub-dev-eastus/${{ env.keyvault_name }}/g' ${{ inputs.artifact_name }}/*.config
         # sed -i 's/kv-gphub-dev-eastus/${{ env.keyvault_name }}/g' testProject/bin/*/*.config
       shell: bash
 
@@ -102,7 +118,7 @@ runs:
       uses: Azure/webapps-deploy@v1
       with:
         app-name: "${{env.webapp_name}}"
-        package: ${{ input.artifact_name }}
+        package: ${{ inputs.artifact_name }}
         slot-name: staging   
     - name: Set website configuration
       run: az webapp config appsettings set --name "${{env.webapp_name}}" --resource-group "${{ env.resourcegroup_name }}" --settings "Environment=${{ inputs.environment }}" --slot staging
