@@ -71,7 +71,8 @@ runs:
           value: "stgp${{ inputs.resourcegroup_code }}${{ inputs.environment }}${{inputs.resourcegroup_location}}"
         - name: "appinsights_name"
           value: "appi-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{inputs.resourcegroup_location}}"
-        - name: "kv-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}""
+        - name: "keyvault_name"
+          value: "kv-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}"
     - name: Checkout source code
       uses: actions/checkout@v2    
     - name: Download artifact
