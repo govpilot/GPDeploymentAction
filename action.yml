@@ -83,7 +83,7 @@ runs:
       uses: azure/login@v1
       with:
         creds: ${{ inputs.azure_credentials }}
-    - run: lst -ltra
+    - run: ls -ltra
       shell: bash
     - name: Create Resource Groups 
       run: |
