@@ -56,23 +56,16 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Set variables
-      using: "core/set-env"
-      env:
-        - name: "webapp_name"
-          value: "app-gp${{ inputs.resourcegroup_code }}-${{ inputs.app_name }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}"
-        - name: "resourcegroup_name"
-          value: "rg-${{ inputs.resourcegroup_code }}-${{ inputs.environment }}"
-        - name: "hub_resourcegroup_name"
-          value: "rg-${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}"
-        - name: "hosting_name"
-          value: "plan-gp${{inputs.resourcegroup_code}}-${{inputs.environment}}-${{inputs.resourcegroup_location}}"
-        - name: "storage_name"
-          value: "stgp${{ inputs.resourcegroup_code }}${{ inputs.environment }}${{inputs.resourcegroup_location}}"
-        - name: "appinsights_name"
-          value: "appi-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{inputs.resourcegroup_location}}"
-        - name: "keyvault_name"
-          value: "kv-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}"
+    - name: Set environment variables
+      run: |
+        echo "webapp_name=app-gp${{ inputs.resourcegroup_code }}-${{ inputs.app_name }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}" >> $GITHUB_ENV
+        echo "resourcegroup_name=rg-${{ inputs.resourcegroup_code }}-${{ inputs.environment }}" >> $GITHUB_ENV
+        echo "hub_resourcegroup_name=rg-${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}" >> $GITHUB_ENV
+        echo "hosting_name=plan-gp${{inputs.resourcegroup_code}}-${{inputs.environment}}-${{inputs.resourcegroup_location}}" >> $GITHUB_ENV
+        echo "storage_name=stgp${{ inputs.resourcegroup_code }}${{ inputs.environment }}${{inputs.resourcegroup_location}}" >> $GITHUB_ENV
+        echo "appinsights_name=appi-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{inputs.resourcegroup_location}}" >> $GITHUB_ENV
+        echo "keyvault_name=kv-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}" >> $GITHUB_ENV
+      shell: bash
     - name: Checkout source code
       uses: actions/checkout@v2    
     - name: Download artifact
