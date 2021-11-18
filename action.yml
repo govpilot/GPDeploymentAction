@@ -2,56 +2,56 @@ name: 'GPDeploymentAction'
 description: 'Deploy a web app to azure using key vault, godaddy sub-domain, end2end tests'
 author: '@besmiralia'
 inputs:
-  appName:
+  app_name:
     required: true
     type: string
   environment:
     required: true
     type: string
-  resourceGroupCode: 
+  resourcegroup_code: 
     required: true
     type: string
-  hubResourceGroupCode: 
+  hub_resourcegroup_code: 
     required: true
     type: string
-  resourceGroupLocation:
+  resourcegroup_location:
     required: false
     type: string
     default: 'eastus'
-  domainPrefix:
+  domain_prefix:
     required: true
     type: string
-  testName:
+  test_name:
     required: false
     type: string
     default: ''
-  artifactName:
+  artifact_name:
     required: false
     type: string
     default: 'website'
-  azureCreds:
+  azure_credentials:
     required: true
-  godaddyKey:
+  godaddy_key:
     required: false        
-  godaddySecret:
+  godaddy_secret:
     required: false
-  certificateThumbprint:
+  certificate_thumbprint:
     required: true
-  integrationTestToken:
+  integration_test_token:
     required: false
-  qaTestAccountUser:
+  qa_test_account_user:
     required: false        
-  qaTestAccountPassword:
+  qa_test_account_password:
     required: false
 
 env:
-  webAppName: "app-gp${{ inputs.resourceGroupCode }}-${{ inputs.appName }}-${{ inputs.environment }}-${{ inputs.resourceGroupLocation }}"
-  resourceGroupName: "rg-${{ inputs.resourceGroupCode }}-${{ inputs.environment }}"
-  hubResourceGroupName: "rg-${{ inputs.hubResourceGroupCode }}-${{ inputs.environment }}"
-  hostingName: "plan-gp${{inputs.resourceGroupCode}}-${{inputs.environment}}-${{inputs.resourceGroupLocation}}"
-  storageName: "stgp${{ inputs.resourceGroupCode }}${{ inputs.environment }}${{inputs.resourceGroupLocation}}"
-  appinsightsName: "appi-gp${{ inputs.hubResourceGroupCode }}-${{ inputs.environment }}-${{inputs.resourceGroupLocation}}"
-  keyVaultName: kv-gp${{ inputs.hubResourceGroupCode }}-${{ inputs.environment }}-${{ inputs.resourceGroupLocation }}
+  webapp_name: "app-gp${{ inputs.resourcegroup_code }}-${{ inputs.app_name }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}"
+  resourcegroup_name: "rg-${{ inputs.resourcegroup_code }}-${{ inputs.environment }}"
+  hub_resourcegroup_name: "rg-${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}"
+  hosting_name: "plan-gp${{inputs.resourcegroup_code}}-${{inputs.environment}}-${{inputs.resourcegroup_location}}"
+  storage_name: "stgp${{ inputs.resourcegroup_code }}${{ inputs.environment }}${{inputs.resourcegroup_location}}"
+  appinsights_name: "appi-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{inputs.resourcegroup_location}}"
+  keyvault_name: kv-gp${{ inputs.hub_resourcegroup_code }}-${{ inputs.environment }}-${{ inputs.resourcegroup_location }}
 
 runs:
   using: "composite"
@@ -61,37 +61,37 @@ runs:
     - name: Download artifact
       uses: actions/download-artifact@v1.0.0
       with:
-        name: ${{ input.artifactName }}
+        name: ${{ input.artifact_name }}
 
     - name: Replace Key Vaults url/name
       run: |
-        sed -i 's/kv-gphub-dev-eastus/${{ env.keyVaultName }}/g' ${{ input.artifactName }}/*.config
-        # sed -i 's/kv-gphub-dev-eastus/${{ env.keyVaultName }}/g' testProject/bin/*/*.config
+        sed -i 's/kv-gphub-dev-eastus/${{ env.keyvault_name }}/g' ${{ input.artifact_name }}/*.config
+        # sed -i 's/kv-gphub-dev-eastus/${{ env.keyvault_name }}/g' testProject/bin/*/*.config
       shell: bash
 
     - name: Azure Login
       uses: azure/login@v1
       with:
-        creds: ${{ inputs.azureCreds }}
+        creds: ${{ inputs.azure_credentials }}
     - name: Deploy infrastructure 
       run: |
-          az group create --location ${{ inputs.resourceGroupLocation }} --name ${{ env.hubResourceGroupName }}
-          az group create --location ${{ inputs.resourceGroupLocation }} --name ${{ env.resourceGroupName }}
+          az group create --location ${{ inputs.resourcegroup_location }} --name ${{ env.hub_resourcegroup_name }}
+          az group create --location ${{ inputs.resourcegroup_location }} --name ${{ env.resourcegroup_name }}
           ${{ github.workspace }}/src/PowerShell/DeployStorage.ps1 `
-            -storageName "${{ env.storageName }}" `
-            -resourceGroupName "${{ env.resourceGroupName }}" `
+            -storageName "${{ env.storage_name }}" `
+            -resourceGroupName "${{ env.resourcegroup_name }}" `
             -templatesLocation "${{ github.workspace }}/src/Templates"
           ${{ github.workspace }}/src/PowerShell/DeployWebHosting.ps1 `
-            -hostingName "${{ env.hostingName }}" `
-            -appinsightsName "${{ env.appinsightsName }}" `
-            -resourceGroupName "${{ env.resourceGroupName }}" `
-            -hubResourceGroupName "${{ env.hubResourceGroupName }}" `
+            -hostingName "${{ env.hosting_name }}" `
+            -appinsightsName "${{ env.appinsights_name }}" `
+            -resourceGroupName "${{ env.resourcegroup_name }}" `
+            -hubResourceGroupName "${{ env.hub_resourcegroup_name }}" `
             -templatesLocation "${{ github.workspace }}/src/Templates"
           ${{ github.workspace }}/src/PowerShell/DeployWebsite.ps1 `
-            -appName "${{ env.webAppName }}" `
-            -hostingName "${{ env.hostingName }}" `
-            -storageName "${{ env.storageName }}" `
-            -resourceGroupName "${{ env.resourceGroupName }}" `
+            -appName "${{ env.webapp_name }}" `
+            -hostingName "${{ env.hosting_name }}" `
+            -storageName "${{ env.storage_name }}" `
+            -resourceGroupName "${{ env.resourcegroup_name }}" `
             -templatesLocation "${{ github.workspace }}/src/Templates"
           ${{ github.workspace }}/src/PowerShell/Output.ps1
       shell: pwsh
@@ -101,70 +101,70 @@ runs:
     - name: Deploy website to Azure WebApp
       uses: Azure/webapps-deploy@v1
       with:
-        app-name: "${{env.webAppName}}"
-        package: ${{ input.artifactName }}
+        app-name: "${{env.webapp_name}}"
+        package: ${{ input.artifact_name }}
         slot-name: staging   
     - name: Set website configuration
-      run: az webapp config appsettings set --name "${{env.webAppName}}" --resource-group "${{ env.resourceGroupName }}" --settings "Environment=${{ inputs.environment }}" --slot staging
+      run: az webapp config appsettings set --name "${{env.webapp_name}}" --resource-group "${{ env.resourcegroup_name }}" --settings "Environment=${{ inputs.environment }}" --slot staging
     - name: Add access to key vault slot
       run: |
-        $websiteStagingSlotIdentityPrincipalId = (az webapp identity assign --resource-group "${{ env.resourceGroupName }}" --name "${{env.webAppName}}" --slot staging | ConvertFrom-Json | SELECT PrincipalId).PrincipalId
-        az keyvault set-policy --name ${{ env.keyVaultName }} --object-id $websiteStagingSlotIdentityPrincipalId --secret-permissions list get
+        $websiteStagingSlotIdentityPrincipalId = (az webapp identity assign --resource-group "${{ env.resourcegroup_name }}" --name "${{env.webapp_name}}" --slot staging | ConvertFrom-Json | SELECT PrincipalId).PrincipalId
+        az keyvault set-policy --name ${{ env.keyvault_name }} --object-id $websiteStagingSlotIdentityPrincipalId --secret-permissions list get
 
-        $websiteSlotIdentityPrincipalId = (az webapp identity assign --resource-group "${{ env.resourceGroupName }}" --name "${{env.webAppName}}" | ConvertFrom-Json | SELECT PrincipalId).PrincipalId
-        az keyvault set-policy --name ${{ env.keyVaultName }} --object-id $websiteSlotIdentityPrincipalId --secret-permissions list get
+        $websiteSlotIdentityPrincipalId = (az webapp identity assign --resource-group "${{ env.resourcegroup_name }}" --name "${{env.webapp_name}}" | ConvertFrom-Json | SELECT PrincipalId).PrincipalId
+        az keyvault set-policy --name ${{ env.keyvault_name }} --object-id $websiteSlotIdentityPrincipalId --secret-permissions list get
       shell: pwsh
     - name: Create Subdomain for staging slot
-      if: inputs.domainPrefix != '' && inputs.godaddyKey != '' && inputs.godaddySecret != ''
+      if: inputs.domain_prefix != '' && inputs.godaddy_key != '' && inputs.godaddy_secret != ''
       run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
-        -godaddy_name "${{ inputs.domainPrefix }}-${{inputs.environment}}-staging" `
-        -godaddy_destination "${{env.webAppName}}-staging.azurewebsites.net" `
+        -godaddy_name "${{ inputs.domain_prefix }}-${{inputs.environment}}-staging" `
+        -godaddy_destination "${{env.webapp_name}}-staging.azurewebsites.net" `
         -godaddy_type "CNAME" `
-        -godaddy_key ${{ inputs.godaddyKey }} `
-        -godaddy_secret ${{ inputs.godaddySecret }}
+        -godaddy_key ${{ inputs.godaddy_key }} `
+        -godaddy_secret ${{ inputs.godaddy_secret }}
       shell: pwsh
     - name: Create Subdomain for production slot
-      if: inputs.domainPrefix != '' && inputs.godaddyKey != '' && inputs.godaddySecret != ''
+      if: inputs.domain_prefix != '' && inputs.godaddy_key != '' && inputs.godaddy_secret != ''
       run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
-        -godaddy_name "${{ inputs.domainPrefix }}-${{inputs.environment}}" `
-        -godaddy_destination "${{env.webAppName}}.azurewebsites.net" `
+        -godaddy_name "${{ inputs.domain_prefix }}-${{inputs.environment}}" `
+        -godaddy_destination "${{env.webapp_name}}.azurewebsites.net" `
         -godaddy_type "CNAME" `
-        -godaddy_key ${{ inputs.godaddyKey }} `
-        -godaddy_secret ${{ inputs.godaddySecret }}
+        -godaddy_key ${{ inputs.godaddy_key }} `
+        -godaddy_secret ${{ inputs.godaddy_secret }}
       shell: pwsh      
     - name: Download integration tests repo
-      if: inputs.testName != ''
+      if: inputs.test_name != ''
       uses: actions/checkout@v2
       with:
         repository: govpilot/integration_tests
         path: integration_tests
-        token: ${{ inputs.integrationTestToken }}
+        token: ${{ inputs.integration_test_token }}
     - name: Set up Python 3.8
-      if: inputs.testName != ''
+      if: inputs.test_name != ''
       uses: actions/setup-python@v1
       with:
         python-version: 3.8
     - name: Install dependencies
-      if: inputs.testName != ''
+      if: inputs.test_name != ''
       run: |
         python -m pip install --upgrade pip
         pip install -e integration_tests/unit_tests
         pip install -r integration_tests/integration_requirements.txt
     - name: Test with pytest
-      if: inputs.testName != ''
+      if: inputs.test_name != ''
       env:
-        QA_TEST_ACCOUNT_USER: ${{ inputs.qaTestAccountUser }}
-        QA_TEST_ACCOUNT_PASSWORD: ${{ inputs.qaTestAccountPassword }}
+        QA_TEST_ACCOUNT_USER: ${{ inputs.qa_test_account_user }}
+        QA_TEST_ACCOUNT_PASSWORD: ${{ inputs.qa_test_account_password }}
         environment: '${{inputs.environment}}'
-      run: pytest integration_tests/unit_tests/integration_tests.py -m ${{ inputs.testName }}
+      run: pytest integration_tests/unit_tests/integration_tests.py -m ${{ inputs.test_name }}
 
     - name: Swap website staging slot to production
-      run: az webapp deployment slot swap --resource-group ${{ env.resourceGroupName }} --name "${{env.webAppName}}" --slot staging --target-slot production
+      run: az webapp deployment slot swap --resource-group ${{ env.resourcegroup_name }} --name "${{env.webapp_name}}" --slot staging --target-slot production
       
     - name: Map domain & add ssl to the web app
-      if: inputs.domainPrefix != ''
+      if: inputs.domain_prefix != ''
       run: |
-        az webapp config hostname add --webapp-name "${{env.webAppName}}" --resource-group ${{env.resourceGroupName}} --hostname "${{inputs.domainPrefix}}-${{inputs.environment}}.govpilot.com"
-        az webapp config ssl bind --certificate-thumbprint ${{inputs.certificateThumbprint}} --ssl-type SNI --name "${{env.webAppName}}" --resource-group ${{env.resourceGroupName}}
+        az webapp config hostname add --webapp-name "${{env.webapp_name}}" --resource-group ${{env.resourcegroup_name}} --hostname "${{inputs.domain_prefix}}-${{inputs.environment}}.govpilot.com"
+        az webapp config ssl bind --certificate-thumbprint ${{inputs.certificate_thumbprint}} --ssl-type SNI --name "${{env.webapp_name}}" --resource-group ${{env.resourcegroup_name}}
