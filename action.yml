@@ -106,6 +106,7 @@ runs:
         slot-name: staging   
     - name: Set website configuration
       run: az webapp config appsettings set --name "${{env.webapp_name}}" --resource-group "${{ env.resourcegroup_name }}" --settings "Environment=${{ inputs.environment }}" --slot staging
+      shell: pwsh
     - name: Add access to key vault slot
       run: |
         $websiteStagingSlotIdentityPrincipalId = (az webapp identity assign --resource-group "${{ env.resourcegroup_name }}" --name "${{env.webapp_name}}" --slot staging | ConvertFrom-Json | SELECT PrincipalId).PrincipalId
@@ -152,6 +153,7 @@ runs:
         python -m pip install --upgrade pip
         pip install -e integration_tests/unit_tests
         pip install -r integration_tests/integration_requirements.txt
+      shell: bash
     - name: Test with pytest
       if: inputs.test_name != ''
       env:
@@ -159,12 +161,15 @@ runs:
         QA_TEST_ACCOUNT_PASSWORD: ${{ inputs.qa_test_account_password }}
         environment: '${{inputs.environment}}'
       run: pytest integration_tests/unit_tests/integration_tests.py -m ${{ inputs.test_name }}
+      shell: pwsh
 
     - name: Swap website staging slot to production
       run: az webapp deployment slot swap --resource-group ${{ env.resourcegroup_name }} --name "${{env.webapp_name}}" --slot staging --target-slot production
+      shell: pwsh
       
     - name: Map domain & add ssl to the web app
       if: inputs.domain_prefix != ''
       run: |
         az webapp config hostname add --webapp-name "${{env.webapp_name}}" --resource-group ${{env.resourcegroup_name}} --hostname "${{inputs.domain_prefix}}-${{inputs.environment}}.govpilot.com"
         az webapp config ssl bind --certificate-thumbprint ${{inputs.certificate_thumbprint}} --ssl-type SNI --name "${{env.webapp_name}}" --resource-group ${{env.resourcegroup_name}}
+      shell: pwsh
