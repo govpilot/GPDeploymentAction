@@ -87,23 +87,23 @@ runs:
       run: |
           az group create --location ${{ inputs.resourcegroup_location }} --name ${{ env.hub_resourcegroup_name }}
           az group create --location ${{ inputs.resourcegroup_location }} --name ${{ env.resourcegroup_name }}
-          ${{ github.workspace }}/src/PowerShell/DeployStorage.ps1 `
+          src/PowerShell/DeployStorage.ps1 `
             -storageName "${{ env.storage_name }}" `
             -resourceGroupName "${{ env.resourcegroup_name }}" `
-            -templatesLocation "${{ github.workspace }}/src/Templates"
-          ${{ github.workspace }}/src/PowerShell/DeployWebHosting.ps1 `
+            -templatesLocation "src/Templates"
+          src/PowerShell/DeployWebHosting.ps1 `
             -hostingName "${{ env.hosting_name }}" `
             -appinsightsName "${{ env.appinsights_name }}" `
             -resourceGroupName "${{ env.resourcegroup_name }}" `
             -hubResourceGroupName "${{ env.hub_resourcegroup_name }}" `
-            -templatesLocation "${{ github.workspace }}/src/Templates"
-          ${{ github.workspace }}/src/PowerShell/DeployWebsite.ps1 `
+            -templatesLocation "src/Templates"
+          src/PowerShell/DeployWebsite.ps1 `
             -appName "${{ env.webapp_name }}" `
             -hostingName "${{ env.hosting_name }}" `
             -storageName "${{ env.storage_name }}" `
             -resourceGroupName "${{ env.resourcegroup_name }}" `
-            -templatesLocation "${{ github.workspace }}/src/Templates"
-          ${{ github.workspace }}/src/PowerShell/Output.ps1
+            -templatesLocation "src/Templates"
+          src/PowerShell/Output.ps1
       shell: pwsh
 
     #Deploy the website  + Database + anything else to the infrastructure
@@ -127,7 +127,7 @@ runs:
       shell: pwsh
     - name: Create Subdomain for staging slot
       if: inputs.domain_prefix != '' && inputs.godaddy_key != '' && inputs.godaddy_secret != ''
-      run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
+      run: src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
         -godaddy_name "${{ inputs.domain_prefix }}-${{inputs.environment}}-staging" `
         -godaddy_destination "${{env.webapp_name}}-staging.azurewebsites.net" `
@@ -137,7 +137,7 @@ runs:
       shell: pwsh
     - name: Create Subdomain for production slot
       if: inputs.domain_prefix != '' && inputs.godaddy_key != '' && inputs.godaddy_secret != ''
-      run: ${{ github.workspace }}/src/PowerShell/GoDaddy.ps1 `
+      run: src/PowerShell/GoDaddy.ps1 `
         -godaddy_domain "govpilot.com" `
         -godaddy_name "${{ inputs.domain_prefix }}-${{inputs.environment}}" `
         -godaddy_destination "${{env.webapp_name}}.azurewebsites.net" `
