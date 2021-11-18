@@ -13,7 +13,11 @@ $headers = @{}
 $headers["Authorization"] = 'sso-key ' + $godaddy_key + ':' + $godaddy_secret
 
 #Get the cname
-Write-Host "Check GoDaddy.com for current CNAME details"
+Write-Host "Domain: $godaddy_domain"
+Write-Host "Name: $godaddy_name"
+Write-Host "Destination: $godaddy_destination"
+Write-Host "Type: $godaddy_type"
+Write-Host "Check GoDaddy.com for current CNAME $godaddy_name"
 $CNameGetResponse = Invoke-WebRequest https://api.godaddy.com/v1/domains/$godaddy_domain/records/$godaddy_type/$godaddy_name -method get -headers $headers
 
 #Set the cname
@@ -28,5 +32,5 @@ if ($results.data.length -eq 0)
 }
 else
 {
-	Write-Host "No DNS update needed in GoDaddy.com"
+	Write-Host "No DNS update needed in GoDaddy.com for $godaddy_name"
 }

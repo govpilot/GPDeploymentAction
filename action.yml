@@ -83,8 +83,6 @@ runs:
       uses: azure/login@v1
       with:
         creds: ${{ inputs.azure_credentials }}
-    - run: ls -ltra
-      shell: bash
     - name: Create Resource Groups 
       run: |
         az group create --location ${{ inputs.resourcegroup_location }} --name ${{ env.hub_resourcegroup_name }}
